@@ -2,6 +2,7 @@ var userForeEl = document.querySelector("#user-form");
 var nameInputEl = document.querySelector("#username");
 var repoContainerEl = document.querySelector("#repos-container");
 var repoSearchTerm = document.querySelector("#repo-search-term")
+var languageButtonsEl = document.querySelector("#language-buttons");
 
 var formSubmitHandler = function (event) {
   event.preventDefault();
@@ -18,20 +19,20 @@ var formSubmitHandler = function (event) {
   console.log(event);
 };
 
-var displayRepos = function (repos, repo, searchTerm) {
+var displayRepos = function (repos, searchTerm) {
   // check if api returned any repos
-if (repos.length === 0) {
-  repoContainerEl.textContent = "No repositories found.";
-  return;
-}
+  if (repos.length === 0) {
+    repoContainerEl.textContent = "No repositories found.";
+    return;
+  }
   repoContainerEl.textContent = "";
   repoSearchTerm.textContent = searchTerm;
-  
+
 
   for (var i = 0; i < repos.length; i++) {
     // format repo name
     var repoName = repos[i].owner.login + "/" + repos[i].name;
-   
+
 
     // create a container for each repo
     var repoEl = document.createElement("a");
@@ -71,22 +72,46 @@ var getUserRepos = function (user) {
 
   // make a request to the url
   fetch(apiUrl)
-  .then(function(response) {
-    // request was successful
-    if (response.ok) {
-      response.json().then(function(data) {
-        displayRepos(data, user);
-      });
-    } else {
-      alert("Error: " + response.statusText);
-    }
+    .then(function (response) {
+      // request was successful
+      if (response.ok) {
+        response.json().then(function (data) {
+          displayRepos(data, user);
+        });
+      } else {
+        alert("Error: " + response.statusText);
+      }
     })
-    .catch(function(error) {
+    .catch(function (error) {
       // notice this `.catch()` getting chained onto the end of the `.then()` method
       alert("unable to connect to github");
     });
-   
-  };
 
+};
 
+var getFeaturedRepos = function (language) {
+  var apiUrl = "https://api.github.com/search/repositories?q=" + language + "+is:featured&sort=help-wanted-issues";
+
+  fetch(apiUrl).then(function (response) {
+    if (response.ok) {
+      response.json().then(function (data) {
+        displayRepos(data.items, language);
+      });
+    } else {
+      alert("what an error: " + response.statusText);
+    }
+  })
+};
+
+var buttonClickHandler = function (event) {
+var language = event.target.getAttribute("data-language");
+if (language) {
+  getFeaturedRepos(language);
+
+  // clear old content
+  repoContainerEl.textContent = "";
+}
+}
+
+languageButtonsEl.addEventListener("click", buttonClickHandler);
 userForeEl.addEventListener("submit", formSubmitHandler);
